@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Image Resizer</title>
+		<link
+			rel="icon"
+			href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAXhJREFUWEftV1tugzAQnDU9QGoeRT0dPVnb29EAVg4Q7GoBR+FhYih5SI1/Ejkbezw7ux4TJoaMUsPT2tTZoSq+p2K2miMXAFXmkFEKVeaTMTcAsIeMkv8MoMohwxukQEaJAcQoparsp+A1Tg010lw6NFS5d+qIWPEsuAYEacDYT/RE2MSpH0ATIAgwNUABlwogTH+e1+AYbRod8XCJmXZhnAkKPofnGjJgS3Pp+ZUqIGXMJf1xqIqv4f/dZbiBBk7ppSNgXiZZmOkD25Rhm2L3WldlgOluAMyw+cAMzNC2RIjPFKxn4JmCuzNwdwAbtOJnIzoxsOou2FIDf7kLgHlHc6ktr2xErU2zZuLSJlO/Wwd0DmBsenJyerXWAenOThUAG0K2WjysdXN8P7fz9jqGsVuxsSQkb+841jVmHx27MM0EYWTXfBjpMdBpYBEDPpv4xKzSgM/CvjGPAWBpGfqezieOGQiEQK25nMcP3au+fC3A7vEzudcvJAKTbfaXt0QAAAAASUVORK5CYII="
+		/>
+	</head>
+	<body style="text-align: center; scrollbar-width: thin">
+		<div style="font-family: Arial, sans-serif; padding: 20px">
+			<h2>Image Resizer</h2>
+			<div style="margin-bottom: 20px">
+				<strong>Upload options</strong>
+				<div style="margin: 10px">
+					<button onclick="upload()">Choose Image</button>
+					<button onclick="uploadFromClipboard()">Paste From Clipboard</button>
+				</div>
+				<div style="margin-bottom: 5px">
+					<label
+						>Width: <input id="width" type="number" step="1" min="1" onchange="resize()" style="width: 60px"
+					/></label>
+					<label
+						>Height: <input id="height" type="number" step="1" min="1" onchange="resize()" style="width: 60px"
+					/></label>
+				</div>
+				<div style="margin-bottom: 10px">
+					<label>Lock aspect ratio: <input id="lockAspectRatio" type="checkbox" checked onchange="resize()" /></label>
+				</div>
+			</div>
+			<div>
+				<strong>Download options</strong>
+				<div style="margin: 10px">
+					<label
+						>Format:
+						<select id="format" style="width: 100px">
+							<option hidden disabled selected value=""></option>
+							<option value="png">PNG</option>
+							<option value="jpeg">JPEG</option>
+							<option value="webp">WEBP</option>
+						</select>
+					</label>
+				</div>
+				<div>
+					<button onclick="download()">Download Image</button>
+					<button onclick="copy()">Copy Image to Clipboard</button>
+				</div>
+			</div>
+		</div>
+
+		<div
+			style="
+				display: none;
+				justify-content: center;
+				align-items: center;
+				overflow: auto;
+				scrollbar-width: thin;
+				border: 1px solid black;
+				margin: 0 auto;
+				max-width: 100%;
+			"
+		>
+			<canvas
+				width="0"
+				height="0"
+				id="canvas"
+				style="
+					background-color: #fff;
+					background-image: linear-gradient(
+							45deg,
+							#efefef 25%,
+							rgba(239, 239, 239, 0) 25%,
+							rgba(239, 239, 239, 0) 75%,
+							#efefef 75%,
+							#efefef
+						),
+						linear-gradient(
+							45deg,
+							#efefef 25%,
+							rgba(239, 239, 239, 0) 25%,
+							rgba(239, 239, 239, 0) 75%,
+							#efefef 75%,
+							#efefef
+						);
+					background-position: 0 0, 10px 10px;
+					background-size: 21px 21px;
+				"
+			></canvas>
+		</div>
+
+		<script>
+			const canvas = document.getElementById('canvas');
+			const offscreenCanvas = new OffscreenCanvas(1, 1);
+			let uploadedFileName = null;
+
+			async function upload() {
+				await new Promise((resolve, reject) => {
+					const fileInput = document.createElement('input');
+					fileInput.type = 'file';
+					fileInput.accept = 'image/png,image/jpeg,image/webp';
+					fileInput.multiple = false;
+					fileInput.onchange = (event) => {
+						const file = event.target.files?.[0];
+						if (file && file.type.match(/image\/(png|jpeg|webp)/)) resolve(file);
+						else reject();
+					};
+					fileInput.oncancel = () => reject();
+					fileInput.click();
+				})
+					.then(async (file) => await handleFile(file))
+					.catch(() => null);
+			}
+
+			async function uploadFromClipboard() {
+				await new Promise((resolve, reject) => {
+					navigator.clipboard
+						.read()
+						.then((clipboardItems) => {
+							const clipboardItem = clipboardItems[0];
+							const type = clipboardItem.types.find((type) => type.match(/image\/(png|jpeg|webp)/));
+							if (type) {
+								clipboardItem.getType(type).then((blob) => {
+									resolve(new File([blob], 'clipboard-image', { type: blob.type }));
+								});
+							} else {
+								reject('No image found in clipboard');
+							}
+						})
+						.catch((error) => reject('Failed to read clipboard contents', error));
+				})
+					.then(async (file) => await handleFile(file))
+					.catch((error, error2) => {
+						console.error(error, error2);
+						alert(error);
+					});
+			}
+
+			async function handleFile(file) {
+				uploadedFileName = file.name.match(/^(.*?)(?:\.[^/.]+)?$/)?.[1];
+				const bitmap = await createImageBitmap(file);
+				offscreenCanvas.width = bitmap.width;
+				offscreenCanvas.height = bitmap.height;
+				document.getElementById('width').value = bitmap.width;
+				document.getElementById('height').value = bitmap.height;
+				document.getElementById('format').value = file.type.match(/image\/(.*)/)?.[1];
+				document.querySelector('div:has(canvas)').style.display = 'flex';
+				offscreenCanvas.getContext('bitmaprenderer').transferFromImageBitmap(bitmap);
+				render();
+			}
+
+			function resize() {
+				if (document.getElementById('lockAspectRatio').checked) {
+					const widthInput = document.getElementById('width');
+					const heightInput = document.getElementById('height');
+					const aspectRatio = offscreenCanvas.width / offscreenCanvas.height;
+					const width = parseInt(widthInput.value);
+					const height = parseInt(heightInput.value);
+					if (canvas.height !== height) {
+						const newWidth = Math.floor(height * aspectRatio);
+						const newHeight = Math.floor(newWidth / aspectRatio);
+						widthInput.value = newWidth;
+						heightInput.value = newHeight;
+					} else {
+						const newHeight = Math.floor(width / aspectRatio);
+						const newWidth = Math.floor(newHeight * aspectRatio);
+						heightInput.value = newHeight;
+						widthInput.value = newWidth;
+					}
+				}
+				render();
+			}
+
+			function render() {
+				canvas.width = parseInt(document.getElementById('width').value);
+				canvas.height = parseInt(document.getElementById('height').value);
+				const canvasContainer = document.querySelector('div:has(canvas)');
+				canvasContainer.style.width = canvas.width + 'px';
+				canvasContainer.style.height = canvas.height + 'px';
+				const ctx = canvas.getContext('2d');
+				ctx.imageSmoothingEnabled = false;
+				ctx.drawImage(offscreenCanvas, 0, 0, canvas.width, canvas.height);
+			}
+
+			function download() {
+				const format = document.getElementById('format').value;
+				canvas.toBlob(
+					(blob) => {
+						const url = URL.createObjectURL(blob);
+						const a = document.createElement('a');
+						a.href = url;
+						a.download = uploadedFileName + '-resized.' + format;
+						a.click();
+						URL.revokeObjectURL(url);
+					},
+					`image/${format}`,
+					1
+				);
+			}
+
+			function copy() {
+				canvas.toBlob(
+					async (blob) => {
+						try {
+							await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })]);
+							alert('Image copied to clipboard.');
+						} catch (error) {
+							console.error(error);
+							alert('Failed to copy image to clipboard.');
+						}
+					},
+					'image/png',
+					1
+				);
+			}
+		</script>
+	</body>
+</html>
+
