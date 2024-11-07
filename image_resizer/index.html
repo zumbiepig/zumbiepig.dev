@@ -19,15 +19,12 @@
 					<button onclick="uploadFromClipboard()">Paste From Clipboard</button>
 				</div>
 				<div style="margin-bottom: 5px">
-					<label
-						>Width: <input id="width" type="number" step="1" min="1" onchange="resize()" style="width: 60px"
-					/></label>
-					<label
-						>Height: <input id="height" type="number" step="1" min="1" onchange="resize()" style="width: 60px"
-					/></label>
+					<label>Width: <input id="width" type="number" step="1" min="1" onchange="resize()" style="width: 60px" /></label>
+					<label>Height: <input id="height" type="number" step="1" min="1" onchange="resize()" style="width: 60px" /></label>
 				</div>
 				<div style="margin-bottom: 10px">
 					<label>Lock aspect ratio: <input id="lockAspectRatio" type="checkbox" checked onchange="resize()" /></label>
+					<label>Anti-aliasing: <input id="anti-aliasing" type="checkbox" onchange="render()" /></label>
 				</div>
 			</div>
 			<div>
@@ -50,44 +47,8 @@
 			</div>
 		</div>
 
-		<div
-			style="
-				display: none;
-				justify-content: center;
-				align-items: center;
-				overflow: auto;
-				scrollbar-width: thin;
-				border: 1px solid black;
-				margin: 0 auto;
-				max-width: 100%;
-			"
-		>
-			<canvas
-				width="0"
-				height="0"
-				id="canvas"
-				style="
-					background-color: #fff;
-					background-image: linear-gradient(
-							45deg,
-							#efefef 25%,
-							rgba(239, 239, 239, 0) 25%,
-							rgba(239, 239, 239, 0) 75%,
-							#efefef 75%,
-							#efefef
-						),
-						linear-gradient(
-							45deg,
-							#efefef 25%,
-							rgba(239, 239, 239, 0) 25%,
-							rgba(239, 239, 239, 0) 75%,
-							#efefef 75%,
-							#efefef
-						);
-					background-position: 0 0, 10px 10px;
-					background-size: 21px 21px;
-				"
-			></canvas>
+		<div style="display: none; justify-content: center; align-items: center; overflow: auto; scrollbar-width: thin; border: 1px solid black; margin: 0 auto; max-width: 100%">
+			<canvas width="0" height="0" id="canvas" style="background-color: #fff; background-image: linear-gradient(45deg, #efefef 25%, rgba(239, 239, 239, 0) 25%, rgba(239, 239, 239, 0) 75%, #efefef 75%, #efefef), linear-gradient(45deg, #efefef 25%, rgba(239, 239, 239, 0) 25%, rgba(239, 239, 239, 0) 75%, #efefef 75%, #efefef); background-position: 0 0, 10px 10px; background-size: 21px 21px"></canvas>
 		</div>
 
 		<script>
@@ -179,7 +140,12 @@
 				canvasContainer.style.width = canvas.width + 'px';
 				canvasContainer.style.height = canvas.height + 'px';
 				const ctx = canvas.getContext('2d');
-				ctx.imageSmoothingEnabled = false;
+				if (document.getElementById('anti-aliasing').checked) {
+					ctx.imageSmoothingEnabled = true;
+					ctx.imageSmoothingQuality = 'high';
+				} else {
+					ctx.imageSmoothingEnabled = false;
+				}
 				ctx.drawImage(offscreenCanvas, 0, 0, canvas.width, canvas.height);
 			}
 
