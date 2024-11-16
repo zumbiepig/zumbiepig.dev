@@ -9,7 +9,7 @@
 			document.addEventListener(
 				'DOMContentLoaded',
 				() => {
-					if (['https:', 'http:'].includes(window.location.protocol)) {
+					if (['https:', 'http:', 'file:'].includes(window.location.protocol)) {
 						document.body.innerHTML = '<h1>Upload your file here</h1><h3>You are using the https: version</h3><h3>This tool was made by zumbiepig</h3>';
 						document.body.appendChild(
 							Object.assign(document.createElement('input'), {
