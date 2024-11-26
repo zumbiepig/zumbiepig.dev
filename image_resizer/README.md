@@ -10,6 +10,6 @@
 
 ---
 
-### Screenshot:
+### User Interface:
 
-![image](https://github.com/user-attachments/assets/d3f2cb20-c0f9-4195-a54a-f5929ca792e0)
+![image](https://github.com/user-attachments/assets/8fc10c4b-9c77-465a-9916-b24022b28959)
