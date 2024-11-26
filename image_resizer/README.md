@@ -1,6 +1,6 @@
 # Image Resizer
 
-**Features:**
+### Features:
 
 - 100% browser-based
 - Simple, easy-to-use UI
@@ -8,6 +8,8 @@
 - Aspect ratio locking
 - Anti-aliasing toggle
 
-**Screenshot:**
+---
+
+### Screenshot:
 
 ![image](https://github.com/user-attachments/assets/d3f2cb20-c0f9-4195-a54a-f5929ca792e0)
