@@ -14,7 +14,7 @@ Note: This will work for any HTML file that you wish to display.
 
 ## Method 2 (offline version):
 
-### WARNING: Your singleplayer worlds WILL NOT save using this method.
+**WARNING: Your singleplayer worlds WILL NOT save using this method.**
 
 1. Download an offline download of Eaglercraft.
 2. Paste everything below into a new tab.
